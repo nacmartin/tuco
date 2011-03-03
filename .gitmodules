@@ -1,0 +1,6 @@
+[submodule "dependences/node-imagemagick"]
+	path = dependences/node-imagemagick
+	url = https://github.com/rsms/node-imagemagick.git
+[submodule "dependences/redis-node-client"]
+	path = dependences/redis-node-client
+	url = https://github.com/fictorial/redis-node-client.git
