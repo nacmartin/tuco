@@ -1,0 +1,15 @@
+!!! 5
+html(lang="en")
+  head
+    title= title
+    meta(name="keywords", content="hola")
+    :javascript
+      | if (foo) {
+      |    bar()
+      | }
+  body
+    h1 Jade - node template engine
+    #container
+      !{body}
+      !=partial('image', images)
+      !{len}

@@ -31,16 +31,46 @@ app.configure(function(){
   app.use(express.methodOverride());
   app.use(express.bodyDecoder());
   app.use(app.router);
-  app.use(express.staticProvider(__dirname + '/images'));
+  app.use(express.staticProvider(__dirname + '/public'));
 });
 
 
 app.get('/', function(req, res){
-  res.render('index.jade', {
-    locals: { title: 'My Site',
-    youAreUsingJade: 'true'
-  }
-});
+  var r = redis.createClient();
+  var imagArr = [];
+  r.stream.on( 'connect', function() {
+    r.lrange( 'images', -5, -1, function( err, data ) {
+      if( !data ) {
+        res.writeHead( 404 );
+        res.write( "No images!" );
+        res.end();
+        return;
+      }
+      var count = data.length;
+      for (var i = 0; i < data.length; i++) {
+        console.log(data[i].toString());
+        var id = data[i].toString();
+        r.get( 'snippet:'+id, function( err, dataIm ) {
+          console.log(dataIm.toString());
+          var obj = JSON.parse( dataIm.toString() );
+          imagArr.push( obj);
+          console.log(imagArr.length);
+          count--;
+          if (count <= 0){
+            console.log(imagArr.length);
+            console.log("lolo");
+            res.render('index.jade', {
+              locals: {
+                len: imagArr.length,
+                title: "hola",
+                images: imagArr
+              }
+            });
+          }
+        });
+      }
+    });
+  });
 });
 
 app.get('/tag/:tag', function(req, res){
@@ -117,7 +147,7 @@ app.get('/save/:link/:title/:tags', function(req, res){
   var dlprogress = 0;
 
   request.addListener('response', function (response) {
-    var downloadfile = fs.createWriteStream("images/"+filename, {'flags': 'a'});
+    var downloadfile = fs.createWriteStream("public/"+filename, {'flags': 'a'});
     sys.puts("File size " + filename + ": " + response.headers['content-length'] + " bytes.");
     response.addListener('data', function (chunk) {
       dlprogress += chunk.length;
@@ -126,8 +156,8 @@ app.get('/save/:link/:title/:tags', function(req, res){
     response.addListener("end", function() {
       downloadfile.end();
       im.resize({
-        srcPath: 'images/'+filename,
-        dstPath: 'images/thumb-'+filename,
+        srcPath: 'public/'+filename,
+        dstPath: 'public/thumb-'+filename,
         width:   500
       }, function(err, stdout, stderr){
         if (err) throw err
@@ -139,6 +169,7 @@ app.get('/save/:link/:title/:tags', function(req, res){
               var msg = 'The snippet has been saved at <a href="/image/'+id+'">'+req.headers.host+'/image/'+id+'</a>';
               res.send( msg );
             } );
+            r.rpush( 'images' , id );
             for (var i = 0; i < tags.length; i++) {
               r.rpush( 'tag:'+tags[i] , jobj );
             };
