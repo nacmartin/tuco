@@ -1,2 +1,11 @@
-h1 hola
-=image.title
+.item
+  .image
+    a(href='/image/'+image.id)
+      img(src:'/images/thumb-'+image.filename)
+  .title
+    =image.title
+  .tags
+    - for (var tag in image.tags)
+      span.tag
+        =image.tags[tag]
+

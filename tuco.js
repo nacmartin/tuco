@@ -30,6 +30,7 @@ app.configure('production', function() {
 app.configure(function(){
   app.use(express.methodOverride());
   app.use(express.bodyDecoder());
+  app.use(express.compiler({ src: __dirname + '/public', enable: ['less']}));
   app.use(app.router);
   app.use(express.staticProvider(__dirname + '/public'));
 });
@@ -48,24 +49,21 @@ app.get('/', function(req, res){
       }
       var count = data.length;
       for (var i = 0; i < data.length; i++) {
-        console.log(data[i].toString());
         var id = data[i].toString();
         r.get( 'snippet:'+id, function( err, dataIm ) {
-          console.log(dataIm.toString());
           var obj = JSON.parse( dataIm.toString() );
+          obj.id = id;
           imagArr.push( obj);
-          console.log(imagArr.length);
           count--;
-          if (count <= 0){
-            console.log(imagArr.length);
-            console.log("lolo");
+          if (count == 0){
+            console.log(count);
             res.render('index.jade', {
               locals: {
-                len: imagArr.length,
                 title: "hola",
                 images: imagArr
               }
             });
+            return;
           }
         });
       }
@@ -112,7 +110,7 @@ app.get('/image/:id', function(req, res){
 
       var obj = JSON.parse( data.toString() );
 
-      res.write("<img src='/thumb-"+obj.filename+"'>");
+      res.write("<img src='/"+obj.filename+"'>");
       res.end();
       r.close();
     });
@@ -147,7 +145,7 @@ app.get('/save/:link/:title/:tags', function(req, res){
   var dlprogress = 0;
 
   request.addListener('response', function (response) {
-    var downloadfile = fs.createWriteStream("public/"+filename, {'flags': 'a'});
+    var downloadfile = fs.createWriteStream("public/images/"+filename, {'flags': 'a'});
     sys.puts("File size " + filename + ": " + response.headers['content-length'] + " bytes.");
     response.addListener('data', function (chunk) {
       dlprogress += chunk.length;
@@ -156,8 +154,8 @@ app.get('/save/:link/:title/:tags', function(req, res){
     response.addListener("end", function() {
       downloadfile.end();
       im.resize({
-        srcPath: 'public/'+filename,
-        dstPath: 'public/thumb-'+filename,
+        srcPath: 'public/images/'+filename,
+        dstPath: 'public/images/thumb-'+filename,
         width:   500
       }, function(err, stdout, stderr){
         if (err) throw err
