@@ -1,12 +1,10 @@
 .item
   .image
-    .shade1
-      .shade2
-        .shade3
-          .imframe
-            .imcont
-              a(href='/image/'+image.id)
-                img(src:'/images/thumb-'+image.filename)
+    a(href='/image/'+image.id)
+      img(src:'/images/thumb-'+image.filename)
+  .maximize
+    a(href='/images/'+image.filename)
+      img(src:'/maximize.png')
   .title
     =image.title
   .tags

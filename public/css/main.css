@@ -7,6 +7,9 @@ body {
   margin: 0;
   padding: 0;
 }
+ul {
+  list-style: none;
+}
 .tags {
   margin: 10px 0;
 }
@@ -26,51 +29,23 @@ body {
 .tag a:hover {
   text-decoration: underline;
 }
-.shade1 {
-  width: 510px;
-  height: 510px;
-  position: relative;
-  left: 0px;
-  top: 0px;
-  background-color: #e8e8e8;
-}
-.shade2 {
-  width: 510px;
-  height: 510px;
-  position: relative;
-  left: -2px;
-  top: -2px;
-  background-color: #cbcbcb;
-}
-.shade3 {
-  width: 510px;
-  height: 510px;
-  position: relative;
-  left: -2px;
-  top: -2px;
-  background-color: #a0a0a0;
-}
-.imframe {
-  width: 510px;
-  height: 510px;
-  position: relative;
-  left: -1px;
-  top: -1px;
-  background-color: #ffffff;
-}
-.imcont {
-  width: 500px;
-  height: 500px;
-  position: relative;
-  left: 5px;
-  top: 5px;
-  background-color: #ffffff;
-  border: 1px solid #ddd;
-}
 #container {
   width: 980px;
-  margin: 0 auto;
+  margin: 10px auto;
+}
+#maincol {
+  width: 510px;
+  float: left;
+}
+#sidebar {
+  width: 100px;
+  float: right;
+  text-align: right;
 }
 .item {
-  margin-bottom: 20px;
+  margin-bottom: 10px;
+}
+.maximize {
+  float: right;
+  margin-right: 10px;
 }

@@ -14,6 +14,8 @@ client.on("error", function (err) {
     console.log("Error " + err);
 });
 
+var allTags = [];
+
 function trim(string) {
   return string.replace(/^\s*|\s*$/, '');
 }
@@ -40,6 +42,16 @@ app.configure(function(){
 });
 
 
+function refreshAllTags(){
+  var tagArr = [];
+  client.lrange( 'tags', 0, -1, function( err, data ) {
+    for (var i = 0; i < data.length; i++) {
+      tagArr.push(data[i].toString());
+    };
+    allTags = tagArr;
+  });
+}
+
 app.get('/', function(req, res){
   var imagArr = [];
   client.lrange( 'images', -5, -1, function( err, data ) {
@@ -61,7 +73,8 @@ app.get('/', function(req, res){
           res.render('index.jade', {
             locals: {
               title: "Image collector",
-              images: imagArr
+              images: imagArr,
+              tags: allTags
             }
           });
         }
@@ -92,7 +105,8 @@ app.get('/tag/:tag', function(req, res){
           res.render('index.jade', {
             locals: {
               title: "Image collector",
-              images: imagArr
+              images: imagArr,
+              tags: allTags
             }
           });
         }
@@ -117,7 +131,8 @@ app.get('/image/:id', function(req, res){
     res.render('single.jade', {
       locals: {
         title: "Image collector",
-        image: obj
+        image: obj,
+        tags: allTags
       }
     });
 
@@ -173,8 +188,16 @@ app.get('/save/:link/:title/:tags', function(req, res){
           } );
           client.rpush( 'images' , id );
           for (var i = 0; i < tags.length; i++) {
-            client.rpush( 'tag:'+tags[i] , id );
+            var etag = tags[i];
+            client.exists('tag:'+etag, function(err, doesExist){
+              if(!doesExist){
+                client.rpush( 'tags',etag);
+                refreshAllTags();
+              }
+            });
+            client.rpush( 'tag:'+etag , id );
           };
+          client.bgsave();
         console.log("Finished crop " + filename);
         } );
       });
@@ -183,6 +206,7 @@ app.get('/save/:link/:title/:tags', function(req, res){
   });
 });
 
+refreshAllTags();
 
 if (!module.parent) {
   app.listen(3000);
