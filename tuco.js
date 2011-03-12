@@ -37,11 +37,16 @@ app.configure(function(){
 
 
 app.get('/', function(req, res){
+  console.log("petición");
   var r = redis.createClient();
   var imagArr = [];
+  console.log("peti2");
   r.stream.on( 'connect', function() {
+    console.log("bp1");
     r.lrange( 'images', -5, -1, function( err, data ) {
+      console.log("bp2");
       if( !data ) {
+        console.log("nodata");
         res.writeHead( 404 );
         res.write( "No images!" );
         res.end();
@@ -49,21 +54,23 @@ app.get('/', function(req, res){
       }
       var count = data.length;
       for (var i = 0; i < data.length; i++) {
+        console.log("inthefor");
         var id = data[i].toString();
         r.get( 'snippet:'+id, function( err, dataIm ) {
+          console.log("enelgetter");
           var obj = JSON.parse( dataIm.toString() );
           obj.id = id;
           imagArr.push( obj);
           count--;
           if (count == 0){
             console.log(count);
+            console.log("enviando respuesta");
             res.render('index.jade', {
               locals: {
-                title: "hola",
+                title: "Image collector",
                 images: imagArr
               }
             });
-            return;
           }
         });
       }
@@ -125,7 +132,6 @@ app.get('/save/:link/:title/:tags', function(req, res){
   var i;
   for (i = 0; i < tags.length; i++) {
     tags[i] = trim(tags[i]);
-    sys.puts(tags[i]);
   }
 
   var host = url.parse(urlfile).hostname;

@@ -1,0 +1,73 @@
+.rounded-corners (@radius: 5px) {
+  border-radius: @radius;
+  -webkit-border-radius: @radius;
+  -moz-border-radius: @radius;
+}
+
+.shadebox (@size: 510px, @pos: 0px, @brightness: #fff){
+  width: @size;
+  height: @size;
+  position: relative;
+  left: @pos;
+  top: @pos;
+  background-color: @brightness;
+
+}
+
+@color-tag: #484848;
+@color-bg: #f0f1f2;
+@color-light-letter: #ddd;
+
+
+
+body {
+    font-family          :  'Copse', arial, serif;
+    background-color     :  @color-bg
+}
+
+* {
+border: 0;
+margin: 0;
+padding: 0;
+}
+
+.tags{
+  margin: 10px 0;
+}
+
+.tag{
+  background-color: @color-tag;
+  color: @color-light-letter;
+  padding: 5px;
+  margin: 1px;
+  font-size: 11px;
+  .rounded-corners(3px);
+}
+
+.shade1{
+  .shadebox(510px, -0px, #e8e8e8);
+}
+.shade2{
+  .shadebox(510px, -2px, #cbcbcb);
+}
+.shade3{
+  .shadebox(510px, -2px, #a0a0a0);
+}
+
+.imframe{
+  .shadebox(510px, -1px, #fff);
+}
+
+.imcont{
+  .shadebox(500px, 5px, #fff);
+  border: 1px solid #ddd;
+}
+
+#container{
+  width: 980px;
+  margin: 0 auto;
+}
+
+.item{
+  margin-bottom: 20px;
+}
