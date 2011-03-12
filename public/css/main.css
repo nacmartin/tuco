@@ -12,13 +12,19 @@ body {
 }
 .tag {
   background-color: #484848;
-  color: #dddddd;
   padding: 5px;
   margin: 1px;
   font-size: 11px;
   border-radius: 3px;
   -webkit-border-radius: 3px;
   -moz-border-radius: 3px;
+}
+.tag a {
+  color: #dddddd;
+  text-decoration: none;
+}
+.tag a:hover {
+  text-decoration: underline;
 }
 .shade1 {
   width: 510px;

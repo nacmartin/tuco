@@ -12,5 +12,5 @@
   .tags
     - for (var tag in image.tags)
       span.tag
-        =image.tags[tag]
-
+        a(href='/tag/'+image.tags[tag])
+          =image.tags[tag]

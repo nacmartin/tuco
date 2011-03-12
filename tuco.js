@@ -41,14 +41,9 @@ app.configure(function(){
 
 
 app.get('/', function(req, res){
-  console.log("petición");
   var imagArr = [];
-  console.log("peti2");
-  console.log("bp1");
   client.lrange( 'images', -5, -1, function( err, data ) {
-    console.log("bp2");
     if( !data ) {
-      console.log("nodata");
       res.writeHead( 404 );
       res.write( "No images!" );
       res.end();
@@ -56,17 +51,13 @@ app.get('/', function(req, res){
     }
     var count = data.length;
     for (var i = 0; i < data.length; i++) {
-      console.log("inthefor");
       var id = data[i].toString();
       client.get( 'snippet:'+id, function( err, dataIm ) {
-        console.log("enelgetter");
         var obj = JSON.parse( dataIm.toString() );
         obj.id = id;
         imagArr.push( obj);
         count--;
         if (count == 0){
-          console.log(count);
-          console.log("enviando respuesta");
           res.render('index.jade', {
             locals: {
               title: "Image collector",
@@ -81,6 +72,7 @@ app.get('/', function(req, res){
 
 app.get('/tag/:tag', function(req, res){
   var tag = req.params.tag;
+  var imagArr = [];
   client.lrange( 'tag:'+tag, -5, -1, function( err, data ) {
     if( !data ) {
       res.writeHead( 404 );
@@ -88,13 +80,24 @@ app.get('/tag/:tag', function(req, res){
       res.end();
       return;
     }
-
-    res.writeHead( 200, { "Content-Type" : "text/html" } );
+    var count = data.length;
     for (var i = 0; i < data.length; i++) {
-      var obj = JSON.parse( data[i].toString() );
-      res.write("<img src='/"+obj.filename+"'>");
-    };
-    res.end();
+      var id = data[i].toString();
+      client.get( 'snippet:'+id, function( err, dataIm ) {
+        var obj = JSON.parse( dataIm.toString() );
+        obj.id = id;
+        imagArr.push( obj);
+        count--;
+        if (count == 0){
+          res.render('index.jade', {
+            locals: {
+              title: "Image collector",
+              images: imagArr
+            }
+          });
+        }
+      });
+    }
   });
 });
 
@@ -109,12 +112,15 @@ app.get('/image/:id', function(req, res){
       return;
     }
 
-    res.writeHead( 200, { "Content-Type" : "text/html" } );
-
     var obj = JSON.parse( data.toString() );
+    obj.id = id;
+    res.render('single.jade', {
+      locals: {
+        title: "Image collector",
+        image: obj
+      }
+    });
 
-    res.write("<img src='/"+obj.filename+"'>");
-    res.end();
   });
 });
 
@@ -137,8 +143,7 @@ app.get('/save/:link/:title/:tags', function(req, res){
   }
   var theurl = http.createClient(80, host);
   var requestUrl = urlfile;
-  sys.puts("Downloading file: " + filename);
-  sys.puts("Before download request");
+  console.log("Downloading file: " + filename);
   var request = theurl.request('GET', requestUrl, {"host": host});
   request.end();
 
@@ -146,7 +151,7 @@ app.get('/save/:link/:title/:tags', function(req, res){
 
   request.addListener('response', function (response) {
     var downloadfile = fs.createWriteStream("public/images/"+filename, {'flags': 'a'});
-    sys.puts("File size " + filename + ": " + response.headers['content-length'] + " bytes.");
+    console.log("File size " + filename + ": " + response.headers['content-length'] + " bytes.");
     response.addListener('data', function (chunk) {
       dlprogress += chunk.length;
       downloadfile.write(chunk, encoding='binary');
@@ -168,12 +173,12 @@ app.get('/save/:link/:title/:tags', function(req, res){
           } );
           client.rpush( 'images' , id );
           for (var i = 0; i < tags.length; i++) {
-            client.rpush( 'tag:'+tags[i] , jobj );
+            client.rpush( 'tag:'+tags[i] , id );
           };
-        sys.puts("Finished crop " + filename);
+        console.log("Finished crop " + filename);
         } );
       });
-      sys.puts("Finished downloading " + filename);
+      console.log("Finished downloading " + filename);
     });
   });
 });

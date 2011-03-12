@@ -37,11 +37,17 @@ padding: 0;
 
 .tag{
   background-color: @color-tag;
-  color: @color-light-letter;
   padding: 5px;
   margin: 1px;
   font-size: 11px;
   .rounded-corners(3px);
+  a {
+    color: @color-light-letter;
+    text-decoration: none;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 }
 
 .shade1{
