@@ -13,6 +13,9 @@ ul {
 .tags {
   margin: 10px 0;
 }
+a {
+  color: #fff;
+}
 .tag {
   background-color: #484848;
   padding: 5px;
@@ -28,6 +31,9 @@ ul {
 }
 .tag a:hover {
   text-decoration: underline;
+}
+#sidebar li {
+  margin: 7px 0;
 }
 #container {
   width: 980px;
@@ -48,4 +54,10 @@ ul {
 .maximize {
   float: right;
   margin-right: 10px;
+}
+#header {
+  padding: 5px 50px;
+  text-shadow: 1px 1px 10px #888;
+  background-color: #000;
+  font-family: 'Bevan', arial, serif;
 }

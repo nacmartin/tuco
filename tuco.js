@@ -72,7 +72,6 @@ app.get('/', function(req, res){
         if (count == 0){
           res.render('index.jade', {
             locals: {
-              title: "Image collector",
               images: imagArr,
               tags: allTags
             }
@@ -104,7 +103,6 @@ app.get('/tag/:tag', function(req, res){
         if (count == 0){
           res.render('index.jade', {
             locals: {
-              title: "Image collector",
               images: imagArr,
               tags: allTags
             }
@@ -130,7 +128,6 @@ app.get('/image/:id', function(req, res){
     obj.id = id;
     res.render('single.jade', {
       locals: {
-        title: "Image collector",
         image: obj,
         tags: allTags
       }
@@ -183,7 +180,7 @@ app.get('/save/:link/:title/:tags', function(req, res){
         var jobj = JSON.stringify(obj);
         client.incr( 'nextid' , function( err, id ) {
           client.set( 'snippet:'+id, jobj, function() {
-            var msg = 'The snippet has been saved at <a href="/image/'+id+'">'+req.headers.host+'/image/'+id+'</a>';
+            var msg = 'The image has been saved at <a href="/image/'+id+'">'+req.headers.host+'/image/'+id+'</a>';
             res.send( msg );
           } );
           client.rpush( 'images' , id );
