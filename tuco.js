@@ -6,9 +6,13 @@ url = require("url"),
 path = require("path"),
 fs = require("fs"),
 events = require("events"),
-redis = require("redis-client"),
+redis = require("redis"),
+client = redis.createClient(),
 im = require('imagemagick');
 
+client.on("error", function (err) {
+    console.log("Error " + err);
+});
 
 function trim(string) {
   return string.replace(/^\s*|\s*$/, '');
@@ -38,89 +42,79 @@ app.configure(function(){
 
 app.get('/', function(req, res){
   console.log("petición");
-  var r = redis.createClient();
   var imagArr = [];
   console.log("peti2");
-  r.stream.on( 'connect', function() {
-    console.log("bp1");
-    r.lrange( 'images', -5, -1, function( err, data ) {
-      console.log("bp2");
-      if( !data ) {
-        console.log("nodata");
-        res.writeHead( 404 );
-        res.write( "No images!" );
-        res.end();
-        return;
-      }
-      var count = data.length;
-      for (var i = 0; i < data.length; i++) {
-        console.log("inthefor");
-        var id = data[i].toString();
-        r.get( 'snippet:'+id, function( err, dataIm ) {
-          console.log("enelgetter");
-          var obj = JSON.parse( dataIm.toString() );
-          obj.id = id;
-          imagArr.push( obj);
-          count--;
-          if (count == 0){
-            console.log(count);
-            console.log("enviando respuesta");
-            res.render('index.jade', {
-              locals: {
-                title: "Image collector",
-                images: imagArr
-              }
-            });
-          }
-        });
-      }
-    });
+  console.log("bp1");
+  client.lrange( 'images', -5, -1, function( err, data ) {
+    console.log("bp2");
+    if( !data ) {
+      console.log("nodata");
+      res.writeHead( 404 );
+      res.write( "No images!" );
+      res.end();
+      return;
+    }
+    var count = data.length;
+    for (var i = 0; i < data.length; i++) {
+      console.log("inthefor");
+      var id = data[i].toString();
+      client.get( 'snippet:'+id, function( err, dataIm ) {
+        console.log("enelgetter");
+        var obj = JSON.parse( dataIm.toString() );
+        obj.id = id;
+        imagArr.push( obj);
+        count--;
+        if (count == 0){
+          console.log(count);
+          console.log("enviando respuesta");
+          res.render('index.jade', {
+            locals: {
+              title: "Image collector",
+              images: imagArr
+            }
+          });
+        }
+      });
+    }
   });
 });
 
 app.get('/tag/:tag', function(req, res){
   var tag = req.params.tag;
-  var r = redis.createClient();
-  r.stream.on( 'connect', function() {
-    r.lrange( 'tag:'+tag, -5, -1, function( err, data ) {
-      if( !data ) {
-        res.writeHead( 404 );
-        res.write( "No such tag" );
-        res.end();
-        return;
-      }
-
-      res.writeHead( 200, { "Content-Type" : "text/html" } );
-      for (var i = 0; i < data.length; i++) {
-        var obj = JSON.parse( data[i].toString() );
-        res.write("<img src='/"+obj.filename+"'>");
-      };
+  client.lrange( 'tag:'+tag, -5, -1, function( err, data ) {
+    if( !data ) {
+      res.writeHead( 404 );
+      res.write( "No such tag" );
       res.end();
-      r.close();
-    });
+      return;
+    }
+
+    res.writeHead( 200, { "Content-Type" : "text/html" } );
+    for (var i = 0; i < data.length; i++) {
+      var obj = JSON.parse( data[i].toString() );
+      res.write("<img src='/"+obj.filename+"'>");
+    };
+    res.end();
   });
 });
 
 app.get('/image/:id', function(req, res){
   var id = req.params.id;
   var r = redis.createClient();
-  r.stream.on( 'connect', function() {
-    r.get( 'snippet:'+id, function( err, data ) {
-      if( !data ) {
-        res.writeHead( 404 );
-        res.write( "No such image" );
-        res.end();
-        return;
-      }
-
-      res.writeHead( 200, { "Content-Type" : "text/html" } );
-
-      var obj = JSON.parse( data.toString() );
-
-      res.write("<img src='/"+obj.filename+"'>");
+  client.get( 'snippet:'+id, function( err, data ) {
+    if( !data ) {
+      res.writeHead( 404 );
+      res.write( "No such image" );
       res.end();
-      r.close();
-    });
+      return;
+    }
+
+    res.writeHead( 200, { "Content-Type" : "text/html" } );
+
+    var obj = JSON.parse( data.toString() );
+
+    res.write("<img src='/"+obj.filename+"'>");
+    res.end();
   });
 });
 
@@ -166,19 +160,17 @@ app.get('/save/:link/:title/:tags', function(req, res){
       }, function(err, stdout, stderr){
         if (err) throw err
         var r = redis.createClient();
-        r.stream.on( 'connect', function() {
-          var jobj = JSON.stringify(obj);
-          r.incr( 'nextid' , function( err, id ) {
-            r.set( 'snippet:'+id, jobj, function() {
-              var msg = 'The snippet has been saved at <a href="/image/'+id+'">'+req.headers.host+'/image/'+id+'</a>';
-              res.send( msg );
-            } );
-            r.rpush( 'images' , id );
-            for (var i = 0; i < tags.length; i++) {
-              r.rpush( 'tag:'+tags[i] , jobj );
-            };
-          sys.puts("Finished crop " + filename);
+        var jobj = JSON.stringify(obj);
+        client.incr( 'nextid' , function( err, id ) {
+          client.set( 'snippet:'+id, jobj, function() {
+            var msg = 'The snippet has been saved at <a href="/image/'+id+'">'+req.headers.host+'/image/'+id+'</a>';
+            res.send( msg );
           } );
+          client.rpush( 'images' , id );
+          for (var i = 0; i < tags.length; i++) {
+            client.rpush( 'tag:'+tags[i] , jobj );
+          };
+        sys.puts("Finished crop " + filename);
         } );
       });
       sys.puts("Finished downloading " + filename);
@@ -189,7 +181,6 @@ app.get('/save/:link/:title/:tags', function(req, res){
 
 if (!module.parent) {
   app.listen(3000);
-  //var r = redis.createClient();
-  //r.flushdb();
+  //client.flushdb();
   console.log("Express server listening on port %d", app.address().port);
 }
