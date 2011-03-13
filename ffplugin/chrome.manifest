@@ -1,0 +1,5 @@
+content   tuco              jar:chrome/tuco.jar!/content/
+skin      tuco  classic/1.0 jar:chrome/tuco.jar!/skin/
+locale    tuco  en-US       jar:chrome/tuco.jar!/locale/en-US/
+
+overlay chrome://browser/content/browser.xul  chrome://tuco/content/browserOverlay.xul

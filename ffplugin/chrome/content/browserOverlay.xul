@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+
+<?xml-stylesheet type="text/css" href="chrome://global/skin/" ?>
+<?xml-stylesheet type="text/css"
+  href="chrome://tuco/skin/browserOverlay.css" ?>
+
+<!DOCTYPE overlay SYSTEM
+  "chrome://tuco/locale/browserOverlay.dtd">
+
+<overlay id="tuco-browser-overlay"
+  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+  <script type="application/x-javascript"
+    src="chrome://tuco/content/browserOverlay.js" />
+
+  <stringbundleset id="stringbundleset">
+    <stringbundle id="tuco-string-bundle"
+      src="chrome://tuco/locale/browserOverlay.properties" />
+  </stringbundleset>
+
+  <popup id="contentAreaContextMenu">
+    <menuitem label="Save image to Tuco" id="grabImage" oncommand="TucoChrome.BrowserOverlay.grabImage(event);"
+            insertafter="context-selectall"/>
+  </popup>
+</overlay>
