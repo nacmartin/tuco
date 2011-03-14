@@ -6,6 +6,7 @@ Tuco is a simple application to store images found on the web in collections.
 It is written in [node.js](http://nodejs.org/) using the [express framework](http://expressjs.com/).
 
 It uses also:
+
 * [redis](http://redis.io) as database.
 * [jade](https://github.com/visionmedia/jade) as template engine.
 * [less](http://lesscss.org/) to extend traditional css.
