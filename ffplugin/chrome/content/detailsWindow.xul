@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+
+<?xml-stylesheet type="text/css" href="chrome://global/skin/" ?>
+<?xml-stylesheet type="text/css" href="chrome://tuco/skin/browserOverlay.css" ?>
+
+<!DOCTYPE overlay SYSTEM "chrome://tuco/locale/browserOverlay.dtd">
+
+<dialog
+  id="tuco-details-window" 
+  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+  xmlns:html="http://www.w3.org/1999/xhtml"
+  title="Save image to Tuco"
+  editTitle="Save image to Tuco"
+  persist="screenX screenY"
+  onload="onLoad();"
+  ondialogaccept="return doOK();"
+  ondialogcancel="return doCancel();">
+
+  <script src="addImage.js" type="application/x-javascript" />
+  <vbox class="inner" flex="0">
+    <grid flex="0">
+      <columns>
+        <column/>
+        <column flex="1"/>
+      </columns>
+      <rows flex="1">
+        <row id="tuco-url">
+          <label id="tuco-url-label" value="Url:"/>
+          <textbox id="tuco-url-txt" accesskey="u" />
+        </row>
+        <row id="tuco-title">
+          <label id="tuco-title-label" value="Title:"/>
+          <textbox id="tuco-title-txt" accesskey="t" />
+        </row>
+        <row id="tuco-tags">
+          <label id="tuco-tags-label" value="Tags:"/>
+          <vbox>
+            <textbox id="tuco-tags-txt" accesskey="a" />
+            <description class="hintText">Separated by commas ",".</description>
+          </vbox>
+        </row>
+      </rows>
+    </grid>
+  </vbox>
+</dialog>

@@ -50,13 +50,27 @@ TucoChrome.BrowserOverlay = {
       }else{
         dst = src;
       }
-      dst = encodeURIComponent(dst);
-      request = new XMLHttpRequest();
-      url2ajax ='http://localhost:3000/save/'+dst+'/titulo/tag';
-      request.open("GET", url2ajax, true);
-      request.send(null);
-
+      var retVals = {'dst': dst, 'title': null, 'tags': null};
+      window.openDialog( "chrome://tuco/content/detailsWindow.xul", 
+        "tuco-details-window", 
+        "chrome,centerscreen,dialog, modal", dst, retVals);
+      if(retVals.dst){
+        dst = encodeURIComponent(retVals.dst);
+        title = encodeURIComponent(retVals.title);
+        tags = encodeURIComponent(retVals.tags);
+        request = new XMLHttpRequest();
+        url2ajax ='http://localhost:3000/save/'+dst+'/'+title+'/'+tags;
+        request.open("GET", url2ajax, true);
+        request.send(null);
+      }
     }
+  },
+
+  doOk: function() {
+
+  },
+
+  doCancel: function() {
   },
 
 };
