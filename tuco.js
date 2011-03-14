@@ -64,7 +64,7 @@ app.get('/', function(req, res){
     var count = data.length;
     for (var i = 0; i < data.length; i++) {
       var id = data[i].toString();
-      client.get( 'snippet:'+id, function( err, dataIm ) {
+      client.get( 'image:'+id, function( err, dataIm ) {
         var obj = JSON.parse( dataIm.toString() );
         imagArr.push( obj);
         count--;
@@ -94,7 +94,7 @@ app.get('/tag/:tag', function(req, res){
     var count = data.length;
     for (var i = 0; i < data.length; i++) {
       var id = data[i].toString();
-      client.get( 'snippet:'+id, function( err, dataIm ) {
+      client.get( 'image:'+id, function( err, dataIm ) {
         var obj = JSON.parse( dataIm.toString() );
         imagArr.push( obj);
         count--;
@@ -113,8 +113,7 @@ app.get('/tag/:tag', function(req, res){
 
 app.get('/image/:id', function(req, res){
   var id = req.params.id;
-  var r = redis.createClient();
-  client.get( 'snippet:'+id, function( err, data ) {
+  client.get( 'image:'+id, function( err, data ) {
     if( !data ) {
       res.writeHead( 404 );
       res.write( "No such image" );
@@ -133,6 +132,33 @@ app.get('/image/:id', function(req, res){
   });
 });
 
+app.get('/remove/:id', function(req, res){
+  var id = req.params.id;
+  client.get( 'image:'+id, function( err, data ) {
+    if( !data ) {
+      res.writeHead( 404 );
+      res.write( "No such image" );
+      res.end();
+      return;
+    }
+    var obj = JSON.parse( data.toString() );
+    var tags = obj.tags;
+    for (var i = 0; i < tags.length; i++) {
+      console.log("tag: " + tags[i]);
+      client.lrem('tag:'+tags[i],1,id);
+      var tag = tags[i];
+      client.lrange( 'tag:'+tags[i], 0, -1, function( err, data ) {
+        if (!data || data.length === 0){
+          client.lrem('tags',1,tag);
+          refreshAllTags();
+        }
+      });
+      client.del('image:'+id);
+      client.lrem('images',1,id);
+      res.redirect('/', 301);
+    }
+  });
+});
 
 app.get('/save/:link/:title/:tags', function(req, res){
   var urlfile = unescape(req.params.link);
@@ -177,24 +203,29 @@ app.get('/save/:link/:title/:tags', function(req, res){
         client.incr( 'nextid' , function( err, id ) {
           obj.id = id;
           var jobj = JSON.stringify(obj);
-          client.set( 'snippet:'+id, jobj, function() {
+          client.set( 'image:'+id, jobj, function() {
             var msg = 'The image has been saved at <a href="/image/'+id+'">'+req.headers.host+'/image/'+id+'</a>';
             res.send( msg );
           } );
           client.rpush( 'images' , id );
           for (var i = 0; i < tags.length; i++) {
-            var etag = tags[i];
-            client.exists('tag:'+etag, function(err, doesExist){
-              if(!doesExist){
-                client.rpush( 'tags',etag);
-                refreshAllTags();
-              }
-            });
-            client.rpush( 'tag:'+etag , id );
+            (function(i) {
+              setTimeout(function() {
+                var etag = tags[i];
+                client.exists('tag:'+etag, function(err, doesExist){
+                  mytag = etag;
+                  if(!doesExist){
+                    client.rpush( 'tags',mytag);
+                    refreshAllTags();
+                  }
+                });
+                client.rpush( 'tag:'+etag , id );
+              }, 0);
+            })(i);
           };
           client.bgsave();
-        console.log("Finished crop " + filename);
-        } );
+          console.log("Finished crop " + filename);
+        });
       });
       console.log("Finished downloading " + filename);
     });

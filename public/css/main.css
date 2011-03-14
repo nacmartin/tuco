@@ -55,6 +55,10 @@ a {
   float: right;
   margin-right: 10px;
 }
+.delete {
+  float: right;
+  margin-right: 10px;
+}
 #header {
   padding: 5px 50px;
   text-shadow: 1px 1px 10px #888;

@@ -5,6 +5,9 @@
   .maximize
     a(href='/images/'+image.filename)
       img(src:'/maximize.png')
+  .delete
+    a(href='/remove/'+image.id)
+      img(src:'/delete_off.png')
   .title
     =image.title
   .tags
