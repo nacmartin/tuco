@@ -66,7 +66,6 @@ app.get('/', function(req, res){
       var id = data[i].toString();
       client.get( 'snippet:'+id, function( err, dataIm ) {
         var obj = JSON.parse( dataIm.toString() );
-        obj.id = id;
         imagArr.push( obj);
         count--;
         if (count == 0){
@@ -97,7 +96,6 @@ app.get('/tag/:tag', function(req, res){
       var id = data[i].toString();
       client.get( 'snippet:'+id, function( err, dataIm ) {
         var obj = JSON.parse( dataIm.toString() );
-        obj.id = id;
         imagArr.push( obj);
         count--;
         if (count == 0){
@@ -125,7 +123,6 @@ app.get('/image/:id', function(req, res){
     }
 
     var obj = JSON.parse( data.toString() );
-    obj.id = id;
     res.render('single.jade', {
       locals: {
         image: obj,
@@ -177,8 +174,9 @@ app.get('/save/:link/:title/:tags', function(req, res){
       }, function(err, stdout, stderr){
         if (err) throw err
         var r = redis.createClient();
-        var jobj = JSON.stringify(obj);
         client.incr( 'nextid' , function( err, id ) {
+          obj.id = id;
+          var jobj = JSON.stringify(obj);
           client.set( 'snippet:'+id, jobj, function() {
             var msg = 'The image has been saved at <a href="/image/'+id+'">'+req.headers.host+'/image/'+id+'</a>';
             res.send( msg );
