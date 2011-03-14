@@ -1,0 +1,25 @@
+table#pagination
+  td
+    - if (pagination.first !== null)
+      - var url = pagination.base + pagination.first
+      #first
+        a(href=url)
+          img(src:'/first.png')
+  td
+    - if (pagination.prev !== null)
+      - var url = pagination.base + pagination.prev
+      #prev
+        a(href=url)
+          img(src:'/prev.png')
+  td#next
+    - if (pagination.next !== null)
+      - var url = pagination.base + pagination.next
+      #next
+        a(href=url)
+          img(src:'/next.png')
+  td#last
+    - if (pagination.last !== null)
+      - var url = pagination.base + pagination.last
+      #last
+        a(href=url)
+          img(src:'/last.png')

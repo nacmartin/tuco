@@ -14,13 +14,14 @@ client.on("error", function (err) {
     console.log("Error " + err);
 });
 
+//Images per page
+var IMGXPAG = 10;
+
 var allTags = [];
 
 function trim(string) {
   return string.replace(/^\s*|\s*$/, '');
 }
-
-
 
 app.configure('development', function() {
   app.use(express.logger());
@@ -41,7 +42,7 @@ app.configure(function(){
   app.use(express.staticProvider(__dirname + '/public'));
 });
 
-
+//refreshes the array allTags with all tags in db
 function refreshAllTags(){
   var tagArr = [];
   client.lrange( 'tags', 0, -1, function( err, data ) {
@@ -52,65 +53,67 @@ function refreshAllTags(){
   });
 }
 
-app.get('/', function(req, res){
+//show lists of images filtered by tag. If tag === null, then shows all images
+function showList(page, tag, res){
+  collection = tag ? 'tag:'+tag : 'images';
   var imagArr = [];
-  client.lrange( 'images', -5, -1, function( err, data ) {
-    if( !data ) {
+  page = parseInt( page , 10)
+  client.llen(collection, function(err, nres){
+    if(page * IMGXPAG > nres || nres === 0){
       res.writeHead( 404 );
       res.write( "No images!" );
       res.end();
       return;
-    }
-    var count = data.length;
-    for (var i = 0; i < data.length; i++) {
-      var id = data[i].toString();
-      client.get( 'image:'+id, function( err, dataIm ) {
-        var obj = JSON.parse( dataIm.toString() );
-        imagArr.push( obj);
-        count--;
-        if (count == 0){
-          res.render('index.jade', {
-            locals: {
-              images: imagArr,
-              tags: allTags
+    }else {
+      //pagination stuff
+      var maxpag = Math.ceil(nres / IMGXPAG) -1;
+      pagination = {
+        first   : (page === 0 ? null : 0),
+        prev    : (page === 0 ? null : page -1),
+        base    : (collection  === 'images' ? '/' : '/'+tag+'/'),
+        current : page,
+        next    : ((page + 1) > maxpag ? null : page + 1 ),
+        last    : ((page + 1) > maxpag ? null : maxpag )
+      }
+
+      client.lrange( collection, -IMGXPAG - page * IMGXPAG, -1 - page * IMGXPAG, function( err, data ) {
+        var count = data.length;
+        for (var i = 0; i < data.length; i++) {
+          var id = data[i].toString();
+          client.get( 'image:'+id, function( err, dataIm ) {
+            var obj = JSON.parse( dataIm.toString() );
+            imagArr.push( obj);
+            count--;
+            if (count == 0){
+              res.render('index.jade', {
+                locals: {
+                  images: imagArr.reverse(),
+                  tags: allTags,
+                  pagination: pagination
+                }
+              });
             }
           });
         }
       });
     }
   });
+}
+
+//Show images from all tags
+app.get(/^\/(:?(\d+)?)$/, function(req, res){
+  var page = req.params[0] || 0; 
+  showList(page, null, res);
 });
 
+//Show images from one tag
 app.get('/tag/:tag', function(req, res){
   var tag = req.params.tag;
-  var imagArr = [];
-  client.lrange( 'tag:'+tag, -5, -1, function( err, data ) {
-    if( !data ) {
-      res.writeHead( 404 );
-      res.write( "No such tag" );
-      res.end();
-      return;
-    }
-    var count = data.length;
-    for (var i = 0; i < data.length; i++) {
-      var id = data[i].toString();
-      client.get( 'image:'+id, function( err, dataIm ) {
-        var obj = JSON.parse( dataIm.toString() );
-        imagArr.push( obj);
-        count--;
-        if (count == 0){
-          res.render('index.jade', {
-            locals: {
-              images: imagArr,
-              tags: allTags
-            }
-          });
-        }
-      });
-    }
-  });
+  var page = req.params[0] || 0; 
+  showList(page, tag, res);
 });
 
+//Show one image
 app.get('/image/:id', function(req, res){
   var id = req.params.id;
   client.get( 'image:'+id, function( err, data ) {
@@ -132,6 +135,7 @@ app.get('/image/:id', function(req, res){
   });
 });
 
+//Remove one image
 app.get('/remove/:id', function(req, res){
   var id = req.params.id;
   client.get( 'image:'+id, function( err, data ) {
@@ -143,10 +147,11 @@ app.get('/remove/:id', function(req, res){
     }
     var obj = JSON.parse( data.toString() );
     var tags = obj.tags;
+    //remove from tag
     for (var i = 0; i < tags.length; i++) {
-      console.log("tag: " + tags[i]);
       client.lrem('tag:'+tags[i],1,id);
       var tag = tags[i];
+      //remove tag if needed
       client.lrange( 'tag:'+tags[i], 0, -1, function( err, data ) {
         if (!data || data.length === 0){
           client.lrem('tags',1,tag);
@@ -155,15 +160,16 @@ app.get('/remove/:id', function(req, res){
       });
       client.del('image:'+id);
       client.lrem('images',1,id);
-      res.redirect('/', 301);
     }
+    res.redirect('/', 301);
   });
 });
 
+//save image
 app.get('/save/:link/:title/:tags', function(req, res){
   var urlfile = unescape(req.params.link);
   var tags = req.params.tags.split(",");
-  var title = req.params.title;
+  var title = req.params.title || "";
   var i;
   for (i = 0; i < tags.length; i++) {
     tags[i] = trim(tags[i]);
@@ -176,6 +182,8 @@ app.get('/save/:link/:title/:tags', function(req, res){
     "tags" : tags,
     "title" : title
   }
+
+  //retrieve it
   var theurl = http.createClient(80, host);
   var requestUrl = urlfile;
   console.log("Downloading file: " + filename);
@@ -191,6 +199,7 @@ app.get('/save/:link/:title/:tags', function(req, res){
       dlprogress += chunk.length;
       downloadfile.write(chunk, encoding='binary');
     });
+    //download finished
     response.addListener("end", function() {
       downloadfile.end();
       im.resize({
@@ -200,6 +209,7 @@ app.get('/save/:link/:title/:tags', function(req, res){
       }, function(err, stdout, stderr){
         if (err) throw err
         var r = redis.createClient();
+        //saving image to db
         client.incr( 'nextid' , function( err, id ) {
           obj.id = id;
           var jobj = JSON.stringify(obj);
@@ -208,6 +218,7 @@ app.get('/save/:link/:title/:tags', function(req, res){
             res.send( msg );
           } );
           client.rpush( 'images' , id );
+          //save tags if needed
           for (var i = 0; i < tags.length; i++) {
             (function(i) {
               setTimeout(function() {
@@ -219,12 +230,13 @@ app.get('/save/:link/:title/:tags', function(req, res){
                     refreshAllTags();
                   }
                 });
+                //push image id to this tag
                 client.rpush( 'tag:'+etag , id );
               }, 0);
             })(i);
           };
           client.bgsave();
-          console.log("Finished crop " + filename);
+          console.log("Finished thumbnail " + filename);
         });
       });
       console.log("Finished downloading " + filename);
