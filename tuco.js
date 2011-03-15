@@ -166,10 +166,10 @@ app.get('/remove/:id', function(req, res){
 });
 
 //save image
-app.get('/save/:link/:title/:tags', function(req, res){
-  var urlfile = unescape(req.params.link);
-  var tags = req.params.tags.split(",");
-  var title = req.params.title || "";
+app.get(/^\/save\/([^\/]+)\/([^\/]*)\/([^\/]*)$/, function(req, res){
+  urlfile = unescape(req.params[0]);
+  var tags = req.params[1] ? req.params[1].split(",") : "";
+  var title = req.params[2] || "";
   var i;
   for (i = 0; i < tags.length; i++) {
     tags[i] = trim(tags[i]);

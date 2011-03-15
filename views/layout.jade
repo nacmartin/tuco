@@ -14,4 +14,9 @@ html(lang="en")
       #maincol
         !{body}
       #sidebar
-        !=partial('tags', tags)
+        ul
+          -each tag in tags
+            li
+              span.tag
+                a(href='/tag/'+tag)
+                  =tag
